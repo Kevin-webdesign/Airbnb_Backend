@@ -16,7 +16,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:status": "prisma migrate status",
-    "db:fresh": "prisma migrate reset"
+    "db:fresh": "prisma migrate reset",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
