@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  name      String
+  email     String   @unique
+  username  String   @unique
+  phone     String
+  password  String
+  role      Role     @default(GUEST)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  avatar    String?    
+  avatarPublicId String?
+  createdAt DateTime @default(now())
+
+  listings  Listing[]
+  bookings  Booking[]
+  reviews   Review[]
+  @@index([name])
+  @@index([role])
+}
+
+model Listing {
+  id             String    @id @default(uuid())
+  title          String
+  pricePerNight  Float
+  guest          Int
+  location       String
+  type           ListingType
+  amenities      String[]
+  hostId         String
+  host           User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  bookings       Booking[]
+  photos         ListingPhoto[]
+  reviews        Review[]
+  @@index([location])
+  @@index([pricePerNight])
+  @@index([type])
+  @@index([hostId])
+  @@index([type, location])
+
+}
+
+model Booking {
+  id         String    @id @default(uuid())
+  checkIn    DateTime
+  checkOut   DateTime
+  totalPrice Float
+  status     BookingStatus @default(PENDING)
+  listingId  String
+  guestId    String
+  createdAt  DateTime      @default(now())
+
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  guest      User    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  @@index([guestId])
+  @@index([listingId])
+  @@index([listingId, checkIn, checkOut])
+  @@index([status])
+}
+
+model ListingPhoto {
+  id         String    @id @default(uuid())
+  url        String
+  publicId   String
+  listingId  String
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id        String    @id @default(uuid())
+  rating    Int
+  comment   String
+  userId    String
+  listingId String
+  user      User     @relation(fields: [userId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([listingId])
+}
+
+enum Role {
+  ADMIN
+  GUEST
+  HOST
+}
+
+enum ListingType {
+  APARTMENT
+  HOUSE
+  VILLA
+  CABIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
