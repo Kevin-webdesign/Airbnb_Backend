@@ -29,6 +29,7 @@ const options: swaggerJsdoc.Options = {
           scheme: "bearer",
           bearerFormat: "JWT",
         },
+        
       },
       schemas: {
         User: {
