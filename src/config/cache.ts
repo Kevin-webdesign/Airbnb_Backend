@@ -1,9 +1,11 @@
 import { createClient } from 'redis';
 
-const redis = createClient();
+const redis = createClient({ url: 'redis://localhost' });
+await redis.connect();
 
 async function setCache(key: string, data: unknown, ttlSeconds: number) {
-  await redis.setex(key, ttlSeconds, JSON.stringify(data));
+  if (!redis) throw new Error('Redis client not initialized');
+  await redis.setEx(key, ttlSeconds, JSON.stringify(data));
 }
 
 async function getCache(key: string): Promise<unknown | null> {
@@ -17,7 +19,7 @@ async function clearCache(listingId: string | number) {
   const prefix = `${listingId}:*`;
   const keys = await redis.keys(prefix);
   if (keys.length > 0) {
-    await redis.del(...keys);
+    await redis.del(keys);
   }
 }
 

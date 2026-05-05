@@ -1,29 +1,28 @@
-const cache = new Map();
-function setCache(key, data, ttlSeconds) {
-    cache.set(key, { data, expiresAt: Date.now() + ttlSeconds * 1000 });
+import { createClient } from 'redis';
+const redis = createClient({ url: 'redis://localhost' });
+await redis.connect();
+async function setCache(key, data, ttlSeconds) {
+    if (!redis)
+        throw new Error('Redis client not initialized');
+    await redis.setEx(key, ttlSeconds, JSON.stringify(data));
 }
-function getCache(key) {
-    const entry = cache.get(key);
-    if (!entry)
+async function getCache(key) {
+    const data = await redis.get(key);
+    if (!data)
         return null;
-    if (Date.now() > entry.expiresAt) {
-        cache.delete(key);
-        return null;
-    }
-    return entry.data;
+    return JSON.parse(data);
 }
 // Clear cache entries for a specific listing
-function clearCache(listingId) {
-    const prefix = `${listingId}:`;
-    for (const key of cache.keys()) {
-        if (key.startsWith(prefix)) {
-            cache.delete(key);
-        }
+async function clearCache(listingId) {
+    const prefix = `${listingId}:*`;
+    const keys = await redis.keys(prefix);
+    if (keys.length > 0) {
+        await redis.del(keys);
     }
 }
 // Clear specific cache key
-function clearCacheByKey(key) {
-    cache.delete(key);
+async function clearCacheByKey(key) {
+    await redis.del(key);
 }
 export { setCache, getCache, clearCache, clearCacheByKey };
 //# sourceMappingURL=cache.js.map

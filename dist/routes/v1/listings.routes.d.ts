@@ -10,8 +10,6 @@
  *       description: Retrieve a list of all listings in the system. Requires authentication.
  *       tags:
  *         - Listings
- *       security:
- *         - bearerAuth: []
  *       responses:
  *         200:
  *           description: A list of listings

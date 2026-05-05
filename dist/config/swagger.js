@@ -18,7 +18,7 @@ const options = {
             {
                 url: "https://airbnbbackend-c4u5.onrender.com/api/v1",
                 description: "Production server",
-            },
+            }
         ],
         components: {
             securitySchemes: {
