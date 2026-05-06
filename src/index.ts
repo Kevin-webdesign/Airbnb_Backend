@@ -7,6 +7,7 @@ import { connectDB } from "./config/prisma.js";
 import { setupSwagger } from "./config/swagger.js";
 import v1Router from "./routes/v1/index.js";
 import morgan from "morgan";
+import {deprecateV1} from "./middlewares/deprecation.middleware.js"
 
 const app = express();
 const PORT = Number(process.env["PORT"]) || 3000;
@@ -33,7 +34,7 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-app.use("/api/v1", v1Router);
+app.use("/api/v1", deprecateV1, v1Router);
 setupSwagger(app);
 
 app.use(process.env["NODE_ENV"] === "production" ? morgan("combined") : morgan("dev"));
