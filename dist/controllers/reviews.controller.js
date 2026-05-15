@@ -7,11 +7,10 @@ export const createReview = async (req, res) => {
     }
     try {
         const { rating, comment } = req.body;
-        const trimmedComment = typeof comment === "string" ? comment.trim() : "";
         if (!req.userId) {
             return res.status(401).json({ message: "Unauthorized" });
         }
-        if (!rating || !trimmedComment) {
+        if (!rating || !comment) {
             return res
                 .status(400)
                 .json({ message: "Missing required fields: rating, comment" });
@@ -28,7 +27,7 @@ export const createReview = async (req, res) => {
         const review = await prisma.review.create({
             data: {
                 rating,
-                comment: trimmedComment,
+                comment,
                 userId: req.userId,
                 listingId,
             },
