@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
-declare const prisma: PrismaClient<{
+import * as PrismaClientModule from "@prisma/client";
+declare const prisma: PrismaClientModule.PrismaClient<{
     adapter: PrismaPg;
 }, never, import("@prisma/client/runtime/client").DefaultArgs>;
 export declare function connectDB(): Promise<void>;

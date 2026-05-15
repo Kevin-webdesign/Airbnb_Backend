@@ -1,8 +1,13 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import * as PrismaClientModule from "@prisma/client";
 import pg from "pg";
 
 const { Pool } = pg;
+const { PrismaClient } = PrismaClientModule;
+
+if (!PrismaClient) {
+  throw new Error("Prisma Client is not generated. Run `prisma generate` before starting the server.");
+}
 
 const pool = new Pool({
   connectionString: process.env["DATABASE_URL"],
