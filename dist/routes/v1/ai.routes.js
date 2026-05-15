@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { naturalLanguageSearch, generateListingDescription, chat, } from "../../controllers/ai.controller.js";
+import { naturalLanguageSearch, generateListingDescription, explainListing, } from "../../controllers/ai.controller.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 const router = Router();
 /**
@@ -26,12 +26,21 @@ const router = Router();
 router.post("/search", naturalLanguageSearch);
 /**
  * @swagger
- * /ai/:id/generate-description:
+ * /ai/{id}/generate-description:
  *   post:
  *     summary: Generate a listing description using AI
  *     tags: [AI]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The listing ID. This route uses the ID in the URL, while the listing details are sent in the body.
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "1d4d37fa-d8a3-4afa-ac0d-497dda0f6544"
  *     requestBody:
  *       required: true
  *       content:
@@ -63,32 +72,79 @@ router.post("/search", naturalLanguageSearch);
  *     responses:
  *       200:
  *         description: Generated listing description
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 description:
+ *                   type: string
+ *                   example: "Wake up steps from the shoreline in this bright beachfront villa..."
+ *       400:
+ *         description: Missing required listing details
+ *       401:
+ *         description: Unauthorized
  */
 router.post("/:id/generate-description", authenticate, generateListingDescription);
 /**
  * @swagger
- * /ai/chat:
+ * /ai/chat/{listingId}:
  *   post:
- *     summary: Chat with the Airbnb AI assistant
+ *     summary: Ask AI to explain a specific listing
+ *     description: Fetches the listing by ID, then answers the user's question using only the listing details, host name, photos count, and recent reviews.
  *     tags: [AI]
+ *     parameters:
+ *       - in: path
+ *         name: listingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *           example: "1d4d37fa-d8a3-4afa-ac0d-497dda0f6544"
+ *         description: The ID of the listing to explain
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [message, sessionId]
+ *             required: [question]
  *             properties:
- *               message:
+ *               question:
  *                 type: string
- *                 example: "What listings do you have in Miami?"
- *               sessionId:
- *                 type: string
- *                 example: "user-123-session-abc"
+ *                 minLength: 1
+ *                 example: "Can you explain this listing and tell me if it is good for 4 guests?"
  *     responses:
  *       200:
- *         description: AI response
+ *         description: Listing explanation response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 listingId:
+ *                   type: string
+ *                   format: uuid
+ *                   example: "1d4d37fa-d8a3-4afa-ac0d-497dda0f6544"
+ *                 question:
+ *                   type: string
+ *                   example: "Can you explain this listing and tell me if it is good for 4 guests?"
+ *                 answer:
+ *                   type: string
+ *                   example: "This villa in Kigali can host up to 4 guests and includes WiFi, parking, and a pool. At $120 per night, it may be a good fit if you want..."
+ *       400:
+ *         description: question and listingId are required
+ *       404:
+ *         description: Listing not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Listing not found"
  */
-router.post("/chat", chat);
+router.post("/chat/:listingId", explainListing);
 export default router;
 //# sourceMappingURL=ai.routes.js.map

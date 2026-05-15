@@ -8,6 +8,7 @@ declare global {
     }
 }
 export declare const getAllListings: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const getDashboardListings: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const getListingById: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const createListing: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
 export declare const updateListing: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;

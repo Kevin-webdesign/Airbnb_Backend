@@ -80,7 +80,7 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     const listing = await prisma.listing.findUnique({
-      where: { id: String(parsed.data.listingId) },
+      where: { id: parsed.data.listingId },
     });
 
     if (!listing) {
@@ -103,7 +103,7 @@ export const createBooking = async (req: Request, res: Response) => {
       
       const conflict = await tx.booking.findFirst({
         where: {
-          listingId: String(listingId),
+          listingId,
           status: "CONFIRMED",
           checkIn: { lt: checkOut },
           checkOut: { gt: checkIn },
@@ -115,7 +115,7 @@ export const createBooking = async (req: Request, res: Response) => {
       }
 
       return tx.booking.create({
-        data: { listingId: String(listingId), guestId, checkIn, checkOut, totalPrice, status: "PENDING" },
+        data: { listingId, guestId, checkIn, checkOut, totalPrice, status: "PENDING" },
       });
     });
 

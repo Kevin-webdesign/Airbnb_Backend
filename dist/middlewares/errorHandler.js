@@ -1,6 +1,13 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 export function errorHandler(err, req, res, next) {
+    if (err instanceof SyntaxError &&
+        "status" in err &&
+        err.status === 400 &&
+        "type" in err &&
+        err.type === "entity.parse.failed") {
+        return res.status(400).json({ error: "Invalid JSON body" });
+    }
     // Zod validation errors
     if (err instanceof ZodError) {
         const errors = err.issues.map((e) => ({

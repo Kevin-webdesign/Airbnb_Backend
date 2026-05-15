@@ -70,6 +70,18 @@ const options = {
                             type: "string",
                             example: "123 Main St, Anytown, USA",
                         },
+                        latitude: {
+                            type: "number",
+                            format: "double",
+                            nullable: true,
+                            example: -1.9441,
+                        },
+                        longitude: {
+                            type: "number",
+                            format: "double",
+                            nullable: true,
+                            example: 30.0619,
+                        },
                         hostId: {
                             type: "string",
                             format: "uuid",

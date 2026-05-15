@@ -1,6 +1,6 @@
 import express, {} from "express";
-import { login, register, getMe, forgotPassword, resetPassword, changePassword } from "../../controllers/auth.controller.js";
-import { authorize, authenticate } from "../../middlewares/auth.middleware.js";
+import { login, register, getMe, forgotPassword, resetPassword, changePassword, becomehost } from "../../controllers/auth.controller.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
 const router = express.Router();
 /**
  * @swagger
@@ -187,6 +187,24 @@ const router = express.Router();
  *         description: Unauthorized
  *       '500':
  *         description: Internal server error
+ *
+ * /auth/become-host:
+ *   post:
+ *     summary: Become a host
+ *     description: Change the authenticated user's role from GUEST to HOST and return a refreshed token.
+ *     tags:
+ *       - Authentication
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: User role updated to host
+ *       '401':
+ *         description: Unauthorized
+ *       '404':
+ *         description: User not found
+ *       '500':
+ *         description: Internal server error
  */
 router.post("/register", register);
 router.post("/login", login);
@@ -194,5 +212,6 @@ router.get("/me", authenticate, getMe);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
 router.post("/change-password", authenticate, changePassword);
+router.post("/become-host", authenticate, becomehost);
 export default router;
 //# sourceMappingURL=auth.route.js.map

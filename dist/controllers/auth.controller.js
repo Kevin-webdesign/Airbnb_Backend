@@ -131,7 +131,7 @@ export async function forgotPassword(req, res) {
             resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
         },
     });
-    const sendemail = passwordResetEmail(user.name, `http://localhost:3000/auth/reset-password/${rawToken}`);
+    const sendemail = passwordResetEmail(user.name, `http://localhost:5173/auth/reset-password/${rawToken}`);
     await sendEmail(user.email, "Password Reset Request", sendemail);
     console.log(`Reset token sent to the email `);
     res.json({ successResponse, rawToken, hashedToken });
@@ -167,5 +167,47 @@ export async function resetPassword(req, res) {
         },
     });
     res.json({ message: "Password reset successfully" });
+}
+export async function becomehost(req, res, next) {
+    try {
+        const id = req.userId;
+        if (!id) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        const user = await prisma.user.findUnique({ where: { id } });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        if (user.role === "HOST") {
+            const { password: _, ...userWithoutPassword } = user;
+            return res.json({
+                message: "User is already a host",
+                user: userWithoutPassword,
+            });
+        }
+        if (user.role === "ADMIN") {
+            const { password: _, ...userWithoutPassword } = user;
+            return res.json({
+                message: "Admin already has host permissions",
+                user: userWithoutPassword,
+            });
+        }
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: { role: "HOST" },
+        });
+        const token = jwt.sign({ userId: updatedUser.id, role: updatedUser.role }, JWT_SECRET, {
+            expiresIn: "7d",
+        });
+        const { password: _, ...userWithoutPassword } = updatedUser;
+        res.json({
+            message: "You are now a host",
+            token,
+            user: userWithoutPassword,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
 }
 //# sourceMappingURL=auth.controller.js.map

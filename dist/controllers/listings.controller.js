@@ -1,6 +1,12 @@
 import prisma from "../config/prisma.js";
 import { createListingSchema, updateListingSchema, } from "../validators/listings.validator.js";
 import { setCache, getCache, clearCacheByKey } from "../config/cache.js";
+const parseQueryNumber = (value) => {
+    if (value === undefined)
+        return undefined;
+    const parsed = parseFloat(String(value));
+    return Number.isNaN(parsed) ? undefined : parsed;
+};
 // GET all listings
 export const getAllListings = async (req, res) => {
     try {
@@ -14,6 +20,7 @@ export const getAllListings = async (req, res) => {
                 host: {
                     select: { name: true },
                 },
+                photos: true,
                 _count: { select: { bookings: true } },
             },
         });
@@ -22,6 +29,36 @@ export const getAllListings = async (req, res) => {
     }
     catch (error) {
         console.error("Error fetching listings:", error);
+        res.status(500).json({ message: "Error fetching listings" });
+    }
+};
+// GET listings for dashboard. Hosts see their own listings, admins see all.
+export const getDashboardListings = async (req, res) => {
+    try {
+        if (!req.userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        const where = req.role === "HOST" ? { hostId: req.userId } : {};
+        const cacheKey = req.role === "HOST" ? `hostListings:${req.userId}` : "allListings";
+        const cached = getCache(cacheKey);
+        if (cached) {
+            return res.status(200).json(cached);
+        }
+        const listings = await prisma.listing.findMany({
+            where,
+            include: {
+                host: {
+                    select: { name: true },
+                },
+                photos: true,
+                _count: { select: { bookings: true } },
+            },
+        });
+        setCache(cacheKey, listings, 60);
+        res.status(200).json(listings);
+    }
+    catch (error) {
+        console.error("Error fetching dashboard listings:", error);
         res.status(500).json({ message: "Error fetching listings" });
     }
 };
@@ -43,6 +80,7 @@ export const getListingById = async (req, res) => {
                         },
                     },
                 },
+                photos: true,
             },
         });
         if (!listing) {
@@ -63,9 +101,21 @@ export const createListing = async (req, res, next) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
         const newListing = await prisma.listing.create({
-            data: { ...data, hostId: req.userId },
+            data: {
+                title: data.title,
+                description: data.description,
+                location: data.location,
+                pricePerNight: data.pricePerNight,
+                guest: data.guest,
+                type: data.type,
+                amenities: data.amenities,
+                hostId: req.userId,
+                ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
+                ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+            },
         });
         clearCacheByKey("allListings");
+        clearCacheByKey(`hostListings:${req.userId}`);
         clearCacheByKey("listingsStats");
         res.status(201).json(newListing);
     }
@@ -92,6 +142,7 @@ export const updateListing = async (req, res, next) => {
             data: Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined)),
         });
         clearCacheByKey("allListings");
+        clearCacheByKey(`hostListings:${listing.hostId}`);
         clearCacheByKey("listingsStats");
         res.status(200).json(updatedListing);
     }
@@ -116,6 +167,7 @@ export const deleteListing = async (req, res) => {
             where: { id },
         });
         clearCacheByKey("allListings");
+        clearCacheByKey(`hostListings:${listing.hostId}`);
         clearCacheByKey("listingsStats");
         res.status(200).json(deletedListing);
     }
@@ -146,7 +198,7 @@ export const listingsStatus = async (req, res, next) => {
 };
 export const listingssearch = async (req, res, next) => {
     try {
-        const { location, minPrice, maxPrice, type, guests } = req.query;
+        const { location, minPrice, maxPrice, type, guests, minLat, maxLat, minLng, maxLng, } = req.query;
         const where = {};
         const page = Math.max(1, parseInt(req.query.page || "1", 10));
         const limit = Math.max(1, parseInt(req.query.limit || "10", 10));
@@ -163,21 +215,35 @@ export const listingssearch = async (req, res, next) => {
         if (guests) {
             const guestCount = parseInt(String(guests), 10);
             if (!Number.isNaN(guestCount)) {
-                where.guests = { gte: guestCount };
+                where.guest = { gte: guestCount };
             }
         }
         if (minPrice || maxPrice) {
             where.pricePerNight = {};
-            if (minPrice) {
-                const min = parseFloat(String(minPrice));
-                if (!Number.isNaN(min))
-                    where.pricePerNight.gte = min;
-            }
-            if (maxPrice) {
-                const max = parseFloat(String(maxPrice));
-                if (!Number.isNaN(max))
-                    where.pricePerNight.lte = max;
-            }
+            const min = parseQueryNumber(minPrice);
+            const max = parseQueryNumber(maxPrice);
+            if (min !== undefined)
+                where.pricePerNight.gte = min;
+            if (max !== undefined)
+                where.pricePerNight.lte = max;
+        }
+        const south = parseQueryNumber(minLat);
+        const north = parseQueryNumber(maxLat);
+        const west = parseQueryNumber(minLng);
+        const east = parseQueryNumber(maxLng);
+        if (south !== undefined || north !== undefined) {
+            where.latitude = {};
+            if (south !== undefined)
+                where.latitude.gte = south;
+            if (north !== undefined)
+                where.latitude.lte = north;
+        }
+        if (west !== undefined || east !== undefined) {
+            where.longitude = {};
+            if (west !== undefined)
+                where.longitude.gte = west;
+            if (east !== undefined)
+                where.longitude.lte = east;
         }
         const [listings, total] = await Promise.all([
             prisma.listing.findMany({
@@ -188,6 +254,7 @@ export const listingssearch = async (req, res, next) => {
                     host: {
                         select: { name: true, email: true },
                     },
+                    photos: true,
                 },
             }),
             prisma.listing.count({ where }),

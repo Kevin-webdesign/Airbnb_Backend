@@ -76,7 +76,8 @@ const router = express.Router();
  *             type: object
  *             properties:
  *               listingId:
- *                 type: integer
+ *                 type: string
+ *                 format: uuid
  *               checkIn:
  *                 type: string
  *                 format: date-time
@@ -88,7 +89,7 @@ const router = express.Router();
  *               - checkIn
  *               - checkOut
  *           example:
- *             listingId: 6
+ *             listingId: "4d4bd274-6c86-4d6d-a84f-d3d7deab3534"
  *             checkIn: "2026-05-18T00:00:00.000Z"
  *             checkOut: "2026-05-20T00:00:00.000Z"
  *     responses:
@@ -125,7 +126,8 @@ const router = express.Router();
  *             type: object
  *             properties:
  *               listingId:
- *                 type: integer
+ *                 type: string
+ *                 format: uuid
  *               checkIn:
  *                 type: string
  *                 format: date-time
@@ -137,7 +139,7 @@ const router = express.Router();
  *               - checkIn
  *               - checkOut
  *           example:
- *             listingId: 6
+ *             listingId: "4d4bd274-6c86-4d6d-a84f-d3d7deab3534"
  *             checkIn: "2026-05-18T00:00:00.000Z"
  *             checkOut: "2026-05-20T00:00:00.000Z"
  *     responses:

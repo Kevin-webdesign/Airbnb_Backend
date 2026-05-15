@@ -6,11 +6,15 @@ export const createReview = async (req, res) => {
         return res.status(400).json({ message: "Invalid listing ID" });
     }
     try {
-        const { userId, rating, comment } = req.body;
-        if (!userId || !rating || !comment) {
+        const { rating, comment } = req.body;
+        const trimmedComment = typeof comment === "string" ? comment.trim() : "";
+        if (!req.userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (!rating || !trimmedComment) {
             return res
                 .status(400)
-                .json({ message: "Missing required fields: userId, rating, comment" });
+                .json({ message: "Missing required fields: rating, comment" });
         }
         if (typeof rating !== "number" || rating < 1 || rating > 5) {
             return res.status(400).json({ message: "Rating must be between 1 and 5" });
@@ -24,8 +28,8 @@ export const createReview = async (req, res) => {
         const review = await prisma.review.create({
             data: {
                 rating,
-                comment,
-                userId,
+                comment: trimmedComment,
+                userId: req.userId,
                 listingId,
             },
             include: {

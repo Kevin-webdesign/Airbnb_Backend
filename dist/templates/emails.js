@@ -8,7 +8,7 @@ export function welcomeEmail(name, role) {
       <h1 style="color: #FF5A5F;">Welcome to Airbnb, ${name}!</h1>
       <p>Your account has been created successfully.</p>
       <p>Start listing your property and earn money.</p>
-      <a href="http://localhost:3000/listings" style="background: #FF5A5F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+      <a href="http://localhost:5173/listings" style="background: #FF5A5F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
       List Your Property
       </a>
     </div>
@@ -20,7 +20,7 @@ export function welcomeEmail(name, role) {
     <h1 style="color: #FF5A5F;">Welcome to Airbnb, ${name}!</h1>
     <p>Your account has been created successfully.</p>
     <p>Start exploring listings and book your next stay.</p>
-    <a href="http://localhost:3000/listings" style="background: #FF5A5F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+    <a href="http://localhost:5173/listings" style="background: #FF5A5F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
         Explore Listings
     </a>
     </div>

@@ -1,7 +1,5 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { JsonOutputParser, StringOutputParser } from "@langchain/core/output_parsers";
-import { InMemoryChatMessageHistory } from "@langchain/core/chat_history";
-import { RunnableWithMessageHistory } from "@langchain/core/runnables";
 import { model } from "../config/ai.js";
 import prisma from "../config/prisma.js";
 // ─── Natural Language Search ──────────────────────────────────────────────────
@@ -127,57 +125,96 @@ export async function generateListingDescription(req, res) {
     });
     res.json({ description });
 }
-// Store conversation histories in memory
-// In production, store these in Redis or a database
-const sessionHistories = new Map();
-function getSessionHistory(sessionId) {
-    if (!sessionHistories.has(sessionId)) {
-        sessionHistories.set(sessionId, new InMemoryChatMessageHistory());
-    }
-    return sessionHistories.get(sessionId);
-}
 // ─── Chatbot ──────────────────────────────────────────────────────────────────
+const explainPrompt = ChatPromptTemplate.fromTemplate(`
+You are a helpful Airbnb listing assistant.
+Explain the listing clearly and helpfully based on the user's question.
+Use only the listing details provided. Do not invent amenities, rules,
+nearby places, availability, discounts, or policies that are not present.
+If the question asks for something missing from the details, say that the
+listing information does not include it.
+
+Listing details:
+- Title: {title}
+- Location: {location}
+- Type: {type}
+- Max guests: {guests}
+- Price per night: ${"{price}"} USD
+- Amenities: {amenities}
+- Host: {host}
+- Photos available: {photoCount}
+- Average review rating: {averageRating}
+- Recent review comments: {reviewComments}
+- Description: {description}
+
+Question: {question}
+
+Write a friendly, well-structured answer in 1-3 short paragraphs. Mention the
+most relevant details first, and keep the answer practical for a guest deciding
+whether this listing fits their needs.
+`);
+const explainChain = explainPrompt.pipe(model).pipe(new StringOutputParser());
 const chatPrompt = ChatPromptTemplate.fromMessages([
     [
         "system",
-        `You are a helpful Airbnb assistant. You help guests find listings, answer questions about properties, and assist with bookings.
-
-Available listings context: {listingsContext}
-
-Be friendly, concise, and helpful. If you don't know something, say so.
-If asked about specific listings, refer to the context provided.`,
+        `You are a helpful Airbnb assistant. You help guests ask about a specific listing and provide useful information based on the listing details.
+Use only the listing details, user context, and chat history provided. If the user is authenticated, you may also mention their booking history when relevant.
+Be friendly, concise, and helpful. If you do not know something, say so.`,
     ],
-    ["placeholder", "{chat_history}"],
-    ["human", "{input}"],
+    ["human", `Listing details:\n{listingContext}\n\nUser profile:\n{userContext}\n\nPrevious chat history:\n{historyContext}\n\nUser message: {input}`],
 ]);
-const chatChain = chatPrompt.pipe(model);
-const chainWithHistory = new RunnableWithMessageHistory({
-    runnable: chatChain,
-    getMessageHistory: getSessionHistory,
-    inputMessagesKey: "input",
-    historyMessagesKey: "chat_history",
-});
-export async function chat(req, res) {
-    const { message, sessionId } = req.body;
-    if (!message || !sessionId) {
-        return res.status(400).json({ error: "message and sessionId are required" });
+const chatChain = chatPrompt.pipe(model).pipe(new StringOutputParser());
+export async function explainListing(req, res) {
+    const { listingId } = req.params;
+    const rawQuestion = req.body?.question ?? req.query["question"];
+    const question = typeof rawQuestion === "string" ? rawQuestion.trim() : "";
+    if (!listingId || question.length === 0) {
+        return res.status(400).json({ error: "question and listingId are required" });
     }
-    // Fetch recent listings to give the AI context about available properties
-    const listings = await prisma.listing.findMany({
-        take: 5,
+    const listing = await prisma.listing.findUnique({
+        where: { id: listingId },
         select: {
             title: true,
+            description: true,
             location: true,
             pricePerNight: true,
             type: true,
-            guests: true,
+            guest: true,
             amenities: true,
+            host: { select: { name: true } },
+            photos: { select: { id: true } },
+            reviews: {
+                select: { rating: true, comment: true },
+                orderBy: { createdAt: "desc" },
+                take: 3,
+            },
         },
     });
-    const listingsContext = listings
-        .map((l) => `- ${l.title} in ${l.location}: $${l.pricePerNight}/night, ${l.type}, up to ${l.guests} guests, amenities: ${l.amenities.join(", ")}`)
-        .join("\n");
-    const reply = await chainWithHistory.invoke({ input: message, listingsContext }, { configurable: { sessionId } });
-    res.json({ reply, sessionId });
+    if (!listing) {
+        return res.status(404).json({ error: "Listing not found" });
+    }
+    const averageRating = listing.reviews.length > 0
+        ? (listing.reviews.reduce((sum, review) => sum + review.rating, 0) /
+            listing.reviews.length).toFixed(1)
+        : "No reviews yet";
+    const reviewComments = listing.reviews
+        .map((review) => review.comment.trim())
+        .filter(Boolean)
+        .join(" | ") || "No review comments available";
+    const answer = await explainChain.invoke({
+        title: listing.title,
+        location: listing.location,
+        type: listing.type,
+        guests: String(listing.guest),
+        amenities: listing.amenities.length > 0 ? listing.amenities.join(", ") : "No amenities listed",
+        price: listing.pricePerNight,
+        host: listing.host.name,
+        photoCount: String(listing.photos.length),
+        averageRating,
+        reviewComments,
+        description: listing.description || "No description provided",
+        question,
+    });
+    res.json({ listingId, question, answer });
 }
 //# sourceMappingURL=ai.controller.js.map

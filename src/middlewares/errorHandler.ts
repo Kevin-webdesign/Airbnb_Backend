@@ -8,6 +8,16 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  if (
+    err instanceof SyntaxError &&
+    "status" in err &&
+    err.status === 400 &&
+    "type" in err &&
+    err.type === "entity.parse.failed"
+  ) {
+    return res.status(400).json({ error: "Invalid JSON body" });
+  }
+
   // Zod validation errors
   if (err instanceof ZodError) {
     const errors = err.issues.map((e: ZodIssue) => ({

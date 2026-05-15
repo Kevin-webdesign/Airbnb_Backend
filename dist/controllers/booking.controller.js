@@ -71,7 +71,7 @@ export const createBooking = async (req, res) => {
             return res.status(400).json({ errors });
         }
         const listing = await prisma.listing.findUnique({
-            where: { id: String(parsed.data.listingId) },
+            where: { id: parsed.data.listingId },
         });
         if (!listing) {
             return res.status(404).json({ message: "Listing not found" });
@@ -88,7 +88,7 @@ export const createBooking = async (req, res) => {
         const newBooking = await prisma.$transaction(async (tx) => {
             const conflict = await tx.booking.findFirst({
                 where: {
-                    listingId: String(listingId),
+                    listingId,
                     status: "CONFIRMED",
                     checkIn: { lt: checkOut },
                     checkOut: { gt: checkIn },
@@ -98,7 +98,7 @@ export const createBooking = async (req, res) => {
                 throw new Error("BOOKING_CONFLICT");
             }
             return tx.booking.create({
-                data: { listingId: String(listingId), guestId, checkIn, checkOut, totalPrice, status: "PENDING" },
+                data: { listingId, guestId, checkIn, checkOut, totalPrice, status: "PENDING" },
             });
         });
         res.status(201).json(newBooking);

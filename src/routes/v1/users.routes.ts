@@ -144,10 +144,10 @@ const router = express.Router();
  *       description: Internal server error
  */
 router.get("/", getAllUsers);
-router.get("/users/:id", authenticate as RequestHandler, getUser);
-router.post("/users", authenticate as RequestHandler, createUser);
-router.put("/users/:id", authenticate as RequestHandler, updateUser);
-router.delete("/users/:id", authenticate as RequestHandler, deleteUser);
-router.get("/:id/bookings", authenticate as RequestHandler, getUserBookings);
 router.get("/stats", authenticate as RequestHandler, CountbyRole);
+router.get("/:id/bookings", authenticate as RequestHandler, getUserBookings);
+router.get("/:id", authenticate as RequestHandler, getUser);
+router.post("/", authenticate as RequestHandler, createUser);
+router.put("/:id", authenticate as RequestHandler, updateUser);
+router.delete("/:id", authenticate as RequestHandler, deleteUser);
 export default router;

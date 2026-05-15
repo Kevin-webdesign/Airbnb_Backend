@@ -1,6 +1,6 @@
 import { z } from "zod";
 export declare const createBookingSchema: z.ZodObject<{
-    listingId: z.ZodNumber;
+    listingId: z.ZodString;
     checkIn: z.ZodString;
     checkOut: z.ZodString;
 }, z.core.$strip>;

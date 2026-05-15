@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, {} from "express";
 import compression from "compression";
+import cors, {} from "cors";
 import { generalLimiter, strictLimiter } from "./middlewares/rateLimiter.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { connectDB } from "./config/prisma.js";
@@ -10,6 +11,25 @@ import morgan from "morgan";
 import { deprecateV1 } from "./middlewares/deprecation.middleware.js";
 const app = express();
 const PORT = Number(process.env["PORT"]) || 3000;
+const configuredOrigins = (process.env["CORS_ORIGINS"] || process.env["FRONTEND_URL"] || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+const allowedOrigins = Array.from(new Set([
+    ...configuredOrigins,
+    `http://localhost:${PORT}`,
+    `http://127.0.0.1:${PORT}`,
+]));
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true,
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(compression());
 // Apply general limiter to all routes

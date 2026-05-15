@@ -1,6 +1,6 @@
 import { Router } from "express";
 import upload from "../../config/multer.js";
-import { deleteAvatar, deleteListingPhoto, uploadAvatar, uploadListingPhoto } from "../../controllers/upload.controller.js";
+import { deleteAvatar, deleteListingPhoto, uploadAvatar, uploadListingPhoto, uploadListingPhotos, } from "../../controllers/upload.controller.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 const router = Router();
 /**
@@ -116,6 +116,7 @@ const router = Router();
 router.post("/:id/avatar", authenticate, upload.single("image"), uploadAvatar);
 router.delete("/:id/avatar", authenticate, deleteAvatar);
 router.post("/listing/:id/photo", authenticate, upload.single("image"), uploadListingPhoto);
+router.post("/listing/:id/photos", authenticate, upload.array("images", 7), uploadListingPhotos);
 router.delete("/listing/:id/photo", authenticate, deleteListingPhoto);
 export default router;
 //# sourceMappingURL=upload.routes.js.map

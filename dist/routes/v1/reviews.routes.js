@@ -1,6 +1,6 @@
 import express, {} from "express";
 import { createReview, getListingReviews, deleteReview } from "../../controllers/reviews.controller.js";
-import { authenticate } from "../../middlewares/auth.middleware.js";
+import { authenticate, requireGuest } from "../../middlewares/auth.middleware.js";
 const router = express.Router();
 /**
  * @swagger
@@ -24,8 +24,6 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             properties:
- *               userId:
- *                 type: string
  *               rating:
  *                 type: integer
  *                 minimum: 1
@@ -43,10 +41,8 @@ const router = express.Router();
  * /reviews/{id}:
  *   get:
  *     summary: Get reviews for a listing
- *     description: Get reviews for a listing. Requires authentication.
+ *     description: Get public reviews for a listing. Does not require authentication.
  *     tags: [Reviews]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -96,8 +92,8 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post("/:id", authenticate, createReview);
-router.get("/:id", authenticate, getListingReviews);
+router.post("/:id", authenticate, requireGuest, createReview);
+router.get("/:id", getListingReviews);
 router.delete("/:id", authenticate, deleteReview);
 export default router;
 //# sourceMappingURL=reviews.routes.js.map

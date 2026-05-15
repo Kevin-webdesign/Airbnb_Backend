@@ -165,7 +165,7 @@ export async function forgotPassword(req: Request, res: Response) {
   });
   const sendemail = passwordResetEmail(
     user.name,
-    `http://localhost:3000/auth/reset-password/${rawToken}`,
+    `http://localhost:5173/auth/reset-password/${rawToken}`,
   );
 
   await sendEmail(user.email, "Password Reset Request", sendemail);
@@ -212,4 +212,56 @@ if(typeof token !== "string") {
   });
 
   res.json({ message: "Password reset successfully" });
+}
+
+
+
+export async function becomehost(req : Request , res : Response , next:NextFunction) {
+
+ try {
+    const id = (req as any).userId;
+
+    if (!id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (user.role === "HOST") {
+      const { password: _, ...userWithoutPassword } = user;
+      return res.json({
+        message: "User is already a host",
+        user: userWithoutPassword,
+      });
+    }
+
+    if (user.role === "ADMIN") {
+      const { password: _, ...userWithoutPassword } = user;
+      return res.json({
+        message: "Admin already has host permissions",
+        user: userWithoutPassword,
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { role: "HOST" },
+    });
+
+    const token = jwt.sign({ userId: updatedUser.id, role: updatedUser.role }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    res.json({
+      message: "You are now a host",
+      token,
+      user: userWithoutPassword,
+    });
+ } catch (error) {
+  next(error);
+ }
 }

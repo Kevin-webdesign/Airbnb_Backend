@@ -15,12 +15,12 @@ export declare const updateUserSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     email: z.ZodOptional<z.ZodString>;
     username: z.ZodOptional<z.ZodString>;
-    phone: z.ZodOptional<z.ZodString>;
-    password: z.ZodOptional<z.ZodString>;
     role: z.ZodOptional<z.ZodDefault<z.ZodEnum<{
         ADMIN: "ADMIN";
         GUEST: "GUEST";
         HOST: "HOST";
     }>>>;
+    phone: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
+    password: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;
 //# sourceMappingURL=users.validator.d.ts.map

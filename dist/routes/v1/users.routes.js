@@ -133,11 +133,11 @@ const router = express.Router();
  *       description: Internal server error
  */
 router.get("/", getAllUsers);
-router.get("/users/:id", authenticate, getUser);
-router.post("/users", authenticate, createUser);
-router.put("/users/:id", authenticate, updateUser);
-router.delete("/users/:id", authenticate, deleteUser);
-router.get("/:id/bookings", authenticate, getUserBookings);
 router.get("/stats", authenticate, CountbyRole);
+router.get("/:id/bookings", authenticate, getUserBookings);
+router.get("/:id", authenticate, getUser);
+router.post("/", authenticate, createUser);
+router.put("/:id", authenticate, updateUser);
+router.delete("/:id", authenticate, deleteUser);
 export default router;
 //# sourceMappingURL=users.routes.js.map

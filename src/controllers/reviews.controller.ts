@@ -10,12 +10,16 @@ export const createReview = async (req: Request, res: Response) => {
   }
 
   try {
-    const { userId, rating, comment } = req.body;
+    const { rating, comment } = req.body;
 
-    if (!userId || !rating || !comment) {
+    if (!req.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!rating || !comment) {
       return res
         .status(400)
-        .json({ message: "Missing required fields: userId, rating, comment" });
+        .json({ message: "Missing required fields: rating, comment" });
     }
 
     if (typeof rating !== "number" || rating < 1 || rating > 5) {
@@ -34,7 +38,7 @@ export const createReview = async (req: Request, res: Response) => {
       data: {
         rating,
         comment,
-        userId,
+        userId: req.userId,
         listingId,
       },
       include: {
