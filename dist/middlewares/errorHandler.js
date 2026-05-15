@@ -1,5 +1,11 @@
-import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
+function isPrismaKnownError(err) {
+    return (typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        typeof err.code === "string" &&
+        err.code.startsWith("P"));
+}
 export function errorHandler(err, req, res, next) {
     if (err instanceof SyntaxError &&
         "status" in err &&
@@ -17,7 +23,7 @@ export function errorHandler(err, req, res, next) {
         return res.status(400).json({ errors });
     }
     // Prisma known errors
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownError(err)) {
         switch (err.code) {
             case "P2002":
                 const target = err.meta?.target;

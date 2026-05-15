@@ -1,6 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
-import { Prisma } from "@prisma/client";
 import { ZodError, type ZodIssue } from "zod";
+
+function isPrismaKnownError(
+  err: unknown,
+): err is { code: string; meta?: { target?: string[] } } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    typeof err.code === "string" &&
+    err.code.startsWith("P")
+  );
+}
 
 export function errorHandler(
   err: unknown,
@@ -28,10 +39,10 @@ export function errorHandler(
   }
 
   // Prisma known errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (isPrismaKnownError(err)) {
     switch (err.code) {
       case "P2002":
-        const target = err.meta?.target as string[] | undefined;
+        const target = err.meta?.target;
         return res.status(409).json({ error: `${target?.join(", ")} already exists` });
       case "P2025":
         return res.status(404).json({ error: "Record not found" });
