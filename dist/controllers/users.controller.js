@@ -35,6 +35,9 @@ export const getUser = async (req, res) => {
                 include: {
                     listing: {
                         include: {
+                            photos: {
+                                select: { id: true, url: true },
+                            },
                             host: {
                                 select: { name: true },
                             },
@@ -47,6 +50,7 @@ export const getUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+        return res.status(200).json(user);
     }
     catch (error) {
         res.status(500).json({ message: "Error fetching user" });
@@ -158,6 +162,9 @@ export const getUserBookings = async (req, res) => {
                 include: {
                     listing: {
                         include: {
+                            photos: {
+                                select: { id: true, url: true },
+                            },
                             host: {
                                 select: { name: true },
                             },

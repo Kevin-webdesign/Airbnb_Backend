@@ -33,7 +33,7 @@ async function main() {
     create: {
       name: "kevin",
       email: "kevinuzamurera@gmail.com",
-      username: "kevin_host",
+      username: "kevin_admin",
       password: hashedPassword,
       phone: "079767892",
       role: "ADMIN",

@@ -17,7 +17,13 @@ export const getAllBookings = async (req, res) => {
                         select: { name: true },
                     },
                     listing: {
-                        select: { title: true, location: true },
+                        select: {
+                            title: true,
+                            location: true,
+                            photos: {
+                                select: { id: true, url: true },
+                            },
+                        },
                     },
                 },
             }),
@@ -46,7 +52,13 @@ export const getBookingById = async (req, res) => {
             where: { id },
             include: {
                 guest: true,
-                listing: true,
+                listing: {
+                    include: {
+                        photos: {
+                            select: { id: true, url: true },
+                        },
+                    },
+                },
             },
         });
         if (!booking) {

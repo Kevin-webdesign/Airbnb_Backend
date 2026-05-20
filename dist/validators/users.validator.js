@@ -13,7 +13,7 @@ export const createUserSchema = z.object({
     username: z.string().min(3, "Username must be at least 3 characters"),
     phone: phoneSchema,
     password: passwordSchema,
-    role: z.enum(["HOST", "GUEST", "ADMIN"]).default("GUEST"),
+    role: z.enum(["HOST", "GUEST", "ADMIN"]),
 });
 export const updateUserSchema = createUserSchema.partial().extend({
     phone: z.preprocess(emptyStringToUndefined, phoneSchema.optional()),

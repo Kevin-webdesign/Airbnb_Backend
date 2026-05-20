@@ -134,6 +134,7 @@ const router = express.Router();
  */
 router.get("/", getAllUsers);
 router.get("/stats", authenticate, CountbyRole);
+router.get("/users/:id", authenticate, getUser);
 router.get("/:id/bookings", authenticate, getUserBookings);
 router.get("/:id", authenticate, getUser);
 router.post("/", authenticate, createUser);

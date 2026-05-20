@@ -5,21 +5,21 @@ export declare const createUserSchema: z.ZodObject<{
     username: z.ZodString;
     phone: z.ZodString;
     password: z.ZodString;
-    role: z.ZodDefault<z.ZodEnum<{
+    role: z.ZodEnum<{
         ADMIN: "ADMIN";
         GUEST: "GUEST";
         HOST: "HOST";
-    }>>;
+    }>;
 }, z.core.$strip>;
 export declare const updateUserSchema: z.ZodObject<{
     name: z.ZodOptional<z.ZodString>;
     email: z.ZodOptional<z.ZodString>;
     username: z.ZodOptional<z.ZodString>;
-    role: z.ZodOptional<z.ZodDefault<z.ZodEnum<{
+    role: z.ZodOptional<z.ZodEnum<{
         ADMIN: "ADMIN";
         GUEST: "GUEST";
         HOST: "HOST";
-    }>>>;
+    }>>;
     phone: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
     password: z.ZodPipe<z.ZodTransform<unknown, unknown>, z.ZodOptional<z.ZodString>>;
 }, z.core.$strip>;

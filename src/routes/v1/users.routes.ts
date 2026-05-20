@@ -145,6 +145,7 @@ const router = express.Router();
  */
 router.get("/", getAllUsers);
 router.get("/stats", authenticate as RequestHandler, CountbyRole);
+router.get("/users/:id", authenticate as RequestHandler, getUser);
 router.get("/:id/bookings", authenticate as RequestHandler, getUserBookings);
 router.get("/:id", authenticate as RequestHandler, getUser);
 router.post("/", authenticate as RequestHandler, createUser);
