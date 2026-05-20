@@ -35,9 +35,6 @@ export const getUser = async (req, res) => {
                 include: {
                     listing: {
                         include: {
-                            photos: {
-                                select: { id: true, url: true },
-                            },
                             host: {
                                 select: { name: true },
                             },
@@ -162,9 +159,6 @@ export const getUserBookings = async (req, res) => {
                 include: {
                     listing: {
                         include: {
-                            photos: {
-                                select: { id: true, url: true },
-                            },
                             host: {
                                 select: { name: true },
                             },
