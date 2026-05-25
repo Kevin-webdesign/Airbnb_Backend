@@ -7,6 +7,7 @@ import {
   getUnreadNotificationsCount,
   markAllNotificationsAsRead,
   markNotificationAsRead,
+  registerPushToken,
 } from "../../controllers/notifications.controller.js";
 import { authenticate, authorize } from "../../middlewares/auth.middleware.js";
 
@@ -156,6 +157,7 @@ const router = express.Router();
 router.get("/", authenticate as RequestHandler, getMyNotifications);
 router.get("/all", authenticate as RequestHandler, authorize(["ADMIN"]) as RequestHandler, getAllNotifications);
 router.get("/unread-count", authenticate as RequestHandler, getUnreadNotificationsCount);
+router.post("/push-token", authenticate as RequestHandler, registerPushToken);
 router.post("/", authenticate as RequestHandler, authorize(["ADMIN"]) as RequestHandler, createSystemNotification);
 router.patch("/read-all", authenticate as RequestHandler, markAllNotificationsAsRead);
 router.patch("/:id/read", authenticate as RequestHandler, markNotificationAsRead);

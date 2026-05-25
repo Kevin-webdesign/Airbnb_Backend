@@ -32,3 +32,8 @@ export const createSystemNotificationSchema = z
       path: ["userId"],
     },
   );
+
+export const registerPushTokenSchema = z.object({
+  token: z.string().trim().min(1).max(300),
+  platform: z.string().trim().max(40).optional(),
+});

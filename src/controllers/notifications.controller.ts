@@ -5,6 +5,7 @@ import { createNotification, createNotifications } from "../services/notificatio
 import {
   createSystemNotificationSchema,
   notificationsQuerySchema,
+  registerPushTokenSchema,
 } from "../validators/notifications.validator.js";
 
 function requireAuth(req: Request, res: Response) {
@@ -198,6 +199,37 @@ export async function deleteNotification(
     await prisma.notification.delete({ where: { id } });
 
     res.json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function registerPushToken(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const user = requireAuth(req, res);
+    if (!user) {
+      return;
+    }
+
+    const data = registerPushTokenSchema.parse(req.body);
+    const pushToken = await prisma.pushToken.upsert({
+      where: { token: data.token },
+      update: {
+        userId: user.id,
+        platform: data.platform,
+      },
+      create: {
+        userId: user.id,
+        token: data.token,
+        platform: data.platform,
+      },
+    });
+
+    res.status(201).json(pushToken);
   } catch (error) {
     next(error);
   }
