@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type NextFunction, type Request, type Response } from "express";
+import { createServer } from "node:http";
 import compression from "compression";
 import cors, { type CorsOptions } from "cors";
 import { generalLimiter, strictLimiter } from "./middlewares/rateLimiter.js";
@@ -9,10 +10,12 @@ import { setupSwagger } from "./config/swagger.js";
 import v1Router from "./routes/v1/index.js";
 import morgan from "morgan";
 import {deprecateV1} from "./middlewares/deprecation.middleware.js"
+import { initializeSocket } from "./config/socket.js";
 
 const app = express();
 const PORT = Number(process.env["PORT"]) || 3000;
-const configuredOrigins = (process.env["CORS_ORIGINS"] || process.env["FRONTEND_URL"] || "http://localhost:5173")
+const server = createServer(app);
+const configuredOrigins = (process.env["CORS_ORIGINS"] || process.env["FRONTEND_URL"] || "http://localhost:5173" || "http://localhost:8081")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -77,7 +80,8 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 async function startServer() {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    initializeSocket(server, allowedOrigins);
+    server.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   } catch (error) {

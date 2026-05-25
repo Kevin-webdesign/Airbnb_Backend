@@ -1,5 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import prisma from "../config/prisma.js";
+import { emitMessageCreated } from "../config/socket.js";
+import { createNotification } from "../services/notifications.service.js";
+import { NotificationType } from "@prisma/client";
 import {
   createMessageSchema,
   listingMessagesQuerySchema,
@@ -79,6 +82,19 @@ export async function sendListingMessage(
       include: {
         sender: { select: { id: true, name: true, role: true, avatar: true } },
         receiver: { select: { id: true, name: true, role: true, avatar: true } },
+      },
+    });
+
+    emitMessageCreated(message);
+    await createNotification({
+      userId: receiverId,
+      type: NotificationType.MESSAGE,
+      title: "New message",
+      message: `${message.sender.name} sent you a message`,
+      data: {
+        messageId: message.id,
+        listingId,
+        senderId: user.id,
       },
     });
 

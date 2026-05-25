@@ -2,6 +2,8 @@ import prisma from "../config/prisma.js";
 import type { NextFunction, Request, Response } from "express";
 import { createBookingSchema } from "../validators/bookings.validator.js";
 import { sendEmail } from "../config/email.js";
+import { NotificationType } from "@prisma/client";
+import { createNotification } from "../services/notifications.service.js";
 import {
   bookingConfirmationEmail,
   bookingCancellationEmail,
@@ -93,6 +95,12 @@ export const createBooking = async (req: Request, res: Response) => {
 
     const listing = await prisma.listing.findUnique({
       where: { id: parsed.data.listingId },
+      select: {
+        id: true,
+        title: true,
+        pricePerNight: true,
+        hostId: true,
+      },
     });
 
     if (!listing) {
@@ -131,6 +139,18 @@ export const createBooking = async (req: Request, res: Response) => {
       });
     });
 
+    await createNotification({
+      userId: listing.hostId,
+      type: NotificationType.BOOKING_CREATED,
+      title: "New booking request",
+      message: `A guest requested to book ${listing.title}`,
+      data: {
+        bookingId: newBooking.id,
+        listingId,
+        guestId,
+      },
+    });
+
     res.status(201).json(newBooking);
   } catch (error) {
     if (error instanceof Error && error.message === "BOOKING_CONFLICT") {
@@ -159,6 +179,21 @@ export const deleteBooking = async (req: Request, res: Response) => {
       const deletedBooking = await prisma.booking.update({
         where: { id },
         data: { status: "CANCELLED" },
+        include: {
+          listing: { select: { id: true, title: true, hostId: true } },
+        },
+      });
+
+      await createNotification({
+        userId: deletedBooking.listing.hostId,
+        type: NotificationType.BOOKING_CANCELLED,
+        title: "Booking cancelled",
+        message: `A guest cancelled their booking for ${deletedBooking.listing.title}`,
+        data: {
+          bookingId: deletedBooking.id,
+          listingId: deletedBooking.listing.id,
+          guestId: deletedBooking.guestId,
+        },
       });
 
       return res
@@ -206,10 +241,12 @@ export const changeBookingStatus = async (
     const Bookingdeatails = await prisma.booking.findUnique({
       where: { id },
       select: {
+        id: true,
         checkIn: true,
         checkOut: true,
+        guestId: true,
         listing: {
-          select: { title: true },
+          select: { id: true, title: true, hostId: true },
         },
         guest: {
           select: { email: true, name: true },
@@ -225,6 +262,18 @@ export const changeBookingStatus = async (
         Bookingdeatails?.checkOut.toDateString() || ""
       );
       await sendEmail(Bookingdeatails?.guest.email || "", "Booking Confirmed!", emailContent);
+      if (Bookingdeatails) {
+        await createNotification({
+          userId: Bookingdeatails.guestId,
+          type: NotificationType.BOOKING_CONFIRMED,
+          title: "Booking confirmed",
+          message: `Your booking for ${Bookingdeatails.listing.title} was confirmed`,
+          data: {
+            bookingId: Bookingdeatails.id,
+            listingId: Bookingdeatails.listing.id,
+          },
+        });
+      }
     }
     if (updatedBooking.status === "CANCELLED") {
       const emailContent = bookingCancellationEmail(
@@ -235,6 +284,18 @@ export const changeBookingStatus = async (
         `http://localhost:3000/listings`
       );
       await sendEmail(Bookingdeatails?.guest.email || "", "Booking Cancelled!", emailContent);
+      if (Bookingdeatails) {
+        await createNotification({
+          userId: Bookingdeatails.guestId,
+          type: NotificationType.BOOKING_CANCELLED,
+          title: "Booking cancelled",
+          message: `Your booking for ${Bookingdeatails.listing.title} was cancelled`,
+          data: {
+            bookingId: Bookingdeatails.id,
+            listingId: Bookingdeatails.listing.id,
+          },
+        });
+      }
     }
 
     res

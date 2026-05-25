@@ -1,4 +1,7 @@
 import prisma from "../config/prisma.js";
+import { emitMessageCreated } from "../config/socket.js";
+import { createNotification } from "../services/notifications.service.js";
+import { NotificationType } from "@prisma/client";
 import { createMessageSchema, listingMessagesQuerySchema, } from "../validators/messages.validator.js";
 function getAuthUser(req) {
     if (!req.userId) {
@@ -60,6 +63,18 @@ export async function sendListingMessage(req, res, next) {
             include: {
                 sender: { select: { id: true, name: true, role: true, avatar: true } },
                 receiver: { select: { id: true, name: true, role: true, avatar: true } },
+            },
+        });
+        emitMessageCreated(message);
+        await createNotification({
+            userId: receiverId,
+            type: NotificationType.MESSAGE,
+            title: "New message",
+            message: `${message.sender.name} sent you a message`,
+            data: {
+                messageId: message.id,
+                listingId,
+                senderId: user.id,
             },
         });
         res.status(201).json(message);

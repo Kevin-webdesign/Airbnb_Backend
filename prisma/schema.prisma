@@ -25,6 +25,7 @@ model User {
   reviews          Review[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  notifications    Notification[]
 
   @@index([name])
   @@index([role])
@@ -121,6 +122,25 @@ model Message {
   @@index([createdAt])
 }
 
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
+  @@index([userId, readAt, createdAt])
+}
+
 enum Role {
   ADMIN
   GUEST
@@ -138,4 +158,14 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+enum NotificationType {
+  SYSTEM
+  MESSAGE
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  LISTING
+  REVIEW
 }
