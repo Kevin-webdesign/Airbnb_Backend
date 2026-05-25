@@ -29,4 +29,8 @@ export declare const createSystemNotificationSchema: z.ZodObject<{
     broadcast: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     data: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
 }, z.core.$strip>;
+export declare const registerPushTokenSchema: z.ZodObject<{
+    token: z.ZodString;
+    platform: z.ZodOptional<z.ZodString>;
+}, z.core.$strip>;
 //# sourceMappingURL=notifications.validator.d.ts.map

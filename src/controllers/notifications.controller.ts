@@ -216,16 +216,17 @@ export async function registerPushToken(
     }
 
     const data = registerPushTokenSchema.parse(req.body);
+    const platformData = data.platform === undefined ? {} : { platform: data.platform };
     const pushToken = await prisma.pushToken.upsert({
       where: { token: data.token },
       update: {
         userId: user.id,
-        platform: data.platform,
+        ...platformData,
       },
       create: {
         userId: user.id,
         token: data.token,
-        platform: data.platform,
+        ...platformData,
       },
     });
 

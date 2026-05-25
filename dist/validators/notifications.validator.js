@@ -26,4 +26,8 @@ export const createSystemNotificationSchema = z
     message: "Provide userId, userIds, role, or broadcast",
     path: ["userId"],
 });
+export const registerPushTokenSchema = z.object({
+    token: z.string().trim().min(1).max(300),
+    platform: z.string().trim().max(40).optional(),
+});
 //# sourceMappingURL=notifications.validator.js.map

@@ -1,5 +1,5 @@
 import express, {} from "express";
-import { createSystemNotification, deleteNotification, getAllNotifications, getMyNotifications, getUnreadNotificationsCount, markAllNotificationsAsRead, markNotificationAsRead, } from "../../controllers/notifications.controller.js";
+import { createSystemNotification, deleteNotification, getAllNotifications, getMyNotifications, getUnreadNotificationsCount, markAllNotificationsAsRead, markNotificationAsRead, registerPushToken, } from "../../controllers/notifications.controller.js";
 import { authenticate, authorize } from "../../middlewares/auth.middleware.js";
 const router = express.Router();
 /**
@@ -145,6 +145,7 @@ const router = express.Router();
 router.get("/", authenticate, getMyNotifications);
 router.get("/all", authenticate, authorize(["ADMIN"]), getAllNotifications);
 router.get("/unread-count", authenticate, getUnreadNotificationsCount);
+router.post("/push-token", authenticate, registerPushToken);
 router.post("/", authenticate, authorize(["ADMIN"]), createSystemNotification);
 router.patch("/read-all", authenticate, markAllNotificationsAsRead);
 router.patch("/:id/read", authenticate, markNotificationAsRead);

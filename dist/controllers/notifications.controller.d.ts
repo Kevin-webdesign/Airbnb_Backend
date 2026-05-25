@@ -5,5 +5,6 @@ export declare function getUnreadNotificationsCount(req: Request, res: Response,
 export declare function markNotificationAsRead(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function markAllNotificationsAsRead(req: Request, res: Response, next: NextFunction): Promise<void>;
 export declare function deleteNotification(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function registerPushToken(req: Request, res: Response, next: NextFunction): Promise<void>;
 export declare function createSystemNotification(req: Request, res: Response, next: NextFunction): Promise<Response<any, Record<string, any>> | undefined>;
 //# sourceMappingURL=notifications.controller.d.ts.map

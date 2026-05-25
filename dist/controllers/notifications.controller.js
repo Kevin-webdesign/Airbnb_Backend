@@ -1,7 +1,7 @@
 import { NotificationType } from "@prisma/client";
 import prisma from "../config/prisma.js";
 import { createNotification, createNotifications } from "../services/notifications.service.js";
-import { createSystemNotificationSchema, notificationsQuerySchema, } from "../validators/notifications.validator.js";
+import { createSystemNotificationSchema, notificationsQuerySchema, registerPushTokenSchema, } from "../validators/notifications.validator.js";
 function requireAuth(req, res) {
     if (!req.userId) {
         res.status(401).json({ message: "Unauthorized" });
@@ -150,6 +150,32 @@ export async function deleteNotification(req, res, next) {
         }
         await prisma.notification.delete({ where: { id } });
         res.json({ message: "Notification deleted successfully" });
+    }
+    catch (error) {
+        next(error);
+    }
+}
+export async function registerPushToken(req, res, next) {
+    try {
+        const user = requireAuth(req, res);
+        if (!user) {
+            return;
+        }
+        const data = registerPushTokenSchema.parse(req.body);
+        const platformData = data.platform === undefined ? {} : { platform: data.platform };
+        const pushToken = await prisma.pushToken.upsert({
+            where: { token: data.token },
+            update: {
+                userId: user.id,
+                ...platformData,
+            },
+            create: {
+                userId: user.id,
+                token: data.token,
+                ...platformData,
+            },
+        });
+        res.status(201).json(pushToken);
     }
     catch (error) {
         next(error);
